@@ -9,6 +9,8 @@ const verifyToken = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
+    console.log(error.message);
+
     res.status(401).json({ message: "Invalid token" });
   }
 };
@@ -16,6 +18,7 @@ const verifyToken = (req, res, next) => {
 const verifyEmployer = (req, res, next) => {
   if (req.user.role !== "employer")
     return res.status(403).json({ message: "Access denied" });
+
   next();
 };
 

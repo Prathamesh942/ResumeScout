@@ -86,4 +86,19 @@ router.delete("/:id", verifyToken, verifyEmployer, async (req, res) => {
   }
 });
 
+router.post("/employer", verifyToken, verifyEmployer, async (req, res) => {
+  try {
+    // console.log(req.user);
+
+    const jobs = await Job.find({ postedBy: req.user.id }); // Fetch jobs posted by the logged-in employer
+
+    res.status(200).json({ jobs });
+  } catch (error) {
+    console.log(error.message);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
+  }
+});
+
 module.exports = router;
