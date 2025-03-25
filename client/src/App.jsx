@@ -9,12 +9,14 @@ import EmployerDashboard from "./pages/employer/EmployerDashboard";
 import EmployerJobs from "./pages/employer/EmployerJobs";
 import EmployerAddJob from "./pages/employer/EmployerAddJob";
 import ProtectedRoute from "./components/ProtectedRoute";
+import LandingPage from "./pages/LandingPage";
 
 function App() {
   return (
     <Router>
       <Routes>
         {/* Candidate Auth */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/candidate/login" element={<CandidateLogin />} />
         <Route path="/candidate/register" element={<CandidateRegister />} />
 

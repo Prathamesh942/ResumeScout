@@ -13,6 +13,14 @@ const ApplicationSchema = new mongoose.Schema(
       enum: ["applied", "shortlisted", "rejected"],
       default: "applied",
     },
+    resumeText: {
+      type: String,
+      required: true,
+    },
+    score: {
+      type: Number,
+      required: true,
+    },
   },
   { timestamps: true }
 );

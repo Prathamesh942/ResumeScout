@@ -24,35 +24,50 @@ function CandidateRegister() {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-200">
+    <div className="flex items-center justify-center h-screen bg-[var(--color-background)]">
       <form
         onSubmit={handleRegister}
-        className="bg-white p-6 rounded shadow-md"
+        className="bg-[var(--color-card)] border border-[var(--color-primary)] text-[var(--color-text-primary)] p-6 rounded-lg shadow-lg backdrop-blur-md w-80"
       >
-        <h2 className="text-xl mb-4">Candidate Register</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-center">
+          Candidate Register
+        </h2>
+
+        {/* Name Input */}
         <input
-          className="border p-2 mb-2 w-full"
+          className="border border-[var(--color-primary)] bg-transparent p-2 mb-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           type="text"
           placeholder="Name"
           onChange={(e) => setName(e.target.value)}
         />
+
+        {/* Email Input */}
         <input
-          className="border p-2 mb-2 w-full"
+          className="border border-[var(--color-primary)] bg-transparent p-2 mb-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           type="email"
           placeholder="Email"
           onChange={(e) => setEmail(e.target.value)}
         />
+
+        {/* Password Input */}
         <input
-          className="border p-2 mb-2 w-full"
+          className="border border-[var(--color-primary)] bg-transparent p-2 mb-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           type="password"
           placeholder="Password"
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button className="bg-green-500 text-white p-2 w-full" type="submit">
+
+        {/* Register Button */}
+        <button
+          className="bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-[var(--color-background)] p-2 w-full rounded cursor-pointer transition-all duration-300"
+          type="submit"
+        >
           Register
         </button>
+
+        {/* Login Link */}
         <Link to={"/candidate/login"}>
-          <button className=" p-2 w-full cursor-pointer">
+          <button className="mt-3 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] p-2 w-full transition-all duration-300">
             Already have an account? Login
           </button>
         </Link>

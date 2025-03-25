@@ -1,1 +1,19 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Gidole&display=swap");
+
+* {
+  font-family: "Gidole", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+@import "tailwindcss";
+
+@theme static {
+  --color-primary: #ff6b6b; /* Vibrant Red */
+  --color-secondary: #ffd166; /* Warm Yellow */
+  --color-background: #121212; /* Dark Theme Background */
+  --color-card: rgba(255, 255, 255, 0.1); /* Glassmorphism Effect */
+  --color-border: var(--color-primary); /* Card Borders */
+  --color-text-primary: #ffffff; /* Main Text */
+  --color-text-secondary: #b0b0b0; /* Muted Text */
+}
