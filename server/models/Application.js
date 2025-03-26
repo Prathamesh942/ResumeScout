@@ -15,7 +15,6 @@ const ApplicationSchema = new mongoose.Schema(
     },
     resumeText: {
       type: String,
-      required: true,
     },
     score: {
       type: Number,

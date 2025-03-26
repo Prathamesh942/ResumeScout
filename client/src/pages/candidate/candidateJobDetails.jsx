@@ -9,6 +9,10 @@ const CandidateJobDetails = () => {
   const [error, setError] = useState("");
   const [resume, setResume] = useState(null);
   const [applied, setApplied] = useState(false);
+  const [questions, setQuestions] = useState([]);
+  const [startInterview, setInterview] = useState(false);
+  const [answers, setAnswers] = useState({});
+  const [resumeScore, setResumeScore] = useState(0);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -18,17 +22,14 @@ const CandidateJobDetails = () => {
         );
         setJob(data);
         const token = localStorage.getItem("token");
-        console.log("Token:", token);
 
         const res = await axios.get(
           "http://localhost:5000/api/applications/my/applications",
-          { headers: { Authorization: `Bearer ${token}` } } // Fix: Headers should be the second argument
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        console.log("Applications Data:", res.data);
         for (let app of res.data) {
-          console.log(app);
-          if (data._id == app?.job?._id) setApplied(true);
+          if (data._id === app?.job?._id) setApplied(true);
         }
       } catch (err) {
         setError("Failed to fetch job details. Please try again.");
@@ -37,37 +38,16 @@ const CandidateJobDetails = () => {
         setLoading(false);
       }
     };
-    const fetchApplications = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        console.log("Token:", token);
-
-        const { data } = await axios.get(
-          "http://localhost:5000/api/applications/my/applications",
-          { headers: { Authorization: `Bearer ${token}` } } // Fix: Headers should be the second argument
-        );
-
-        console.log("Applications Data:", data);
-
-        // Loop through the applications if needed
-        for (const app of data) {
-          console.log(app, job);
-
-          // if (app.job._id == job.id) setApplied(true);
-        }
-      } catch (error) {
-        console.error(
-          "Error fetching applications:",
-          error.response?.data || error.message
-        );
-      }
-    };
 
     fetchJob();
   }, [id]);
 
   const handleFileChange = (e) => {
     setResume(e.target.files[0]);
+  };
+
+  const handleAnswerChange = (index, value) => {
+    setAnswers((prev) => ({ ...prev, [index]: value }));
   };
 
   const applyForJob = async () => {
@@ -81,7 +61,7 @@ const CandidateJobDetails = () => {
       const formData = new FormData();
       formData.append("resume", resume);
 
-      await axios.post(
+      const res = await axios.post(
         `http://localhost:5000/api/applications/${id}/apply`,
         formData,
         {
@@ -92,10 +72,48 @@ const CandidateJobDetails = () => {
         }
       );
 
+      if (res.data.message === "interview") {
+        console.log(res.data);
+
+        setQuestions(res.data.interview);
+        setInterview(true);
+        setResumeScore(res.data.resumeScore);
+        return;
+      }
+
       alert("Application submitted successfully!");
     } catch (error) {
       console.log(error);
       alert("Failed to apply. Please try again.");
+    }
+  };
+
+  const submitInterview = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      console.log({ questions, answers, resumeScore, jobId: job._id });
+
+      const res = await axios.post(
+        `http://localhost:5000/api/applications/${id}/submitinterview`,
+        {
+          questions,
+          answers,
+          resumeScore,
+          jobId: job._id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json", // Correct content type
+          },
+        }
+      );
+
+      alert("Interview submitted successfully!");
+      setInterview(false);
+    } catch (error) {
+      console.log(error);
+      alert("Failed to submit interview. Please try again.");
     }
   };
 
@@ -123,27 +141,50 @@ const CandidateJobDetails = () => {
         </p>
         <p className="text-gray-700 dark:text-gray-300">{job.description}</p>
 
-        {/* File Upload Input */}
-        <input
-          type="file"
-          accept=".pdf,.doc,.docx"
-          onChange={handleFileChange}
-          className="mt-4"
-        />
-
-        <button
-          onClick={applyForJob}
-          className={`mt-4 px-4 py-2 rounded text-white font-semibold transition-all duration-300 `}
-          style={{
-            backgroundColor: `${
-              !applied ? "var(--color-primary)" : "bg-zinc-700"
-            }`,
-            borderColor: "var(--color-primary)",
-          }}
-          disabled={applied}
-        >
-          {applied ? "Applied" : "Apply Now"}
-        </button>
+        {!startInterview ? (
+          <>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={handleFileChange}
+              className="mt-4"
+            />
+            <button
+              onClick={applyForJob}
+              className={`mt-4 px-4 py-2 rounded text-white font-semibold transition-all duration-300 `}
+              style={{
+                backgroundColor: !applied
+                  ? "var(--color-primary)"
+                  : "bg-zinc-700",
+              }}
+              disabled={applied}
+            >
+              {applied ? "Applied" : "Apply Now"}
+            </button>
+          </>
+        ) : (
+          <div className="mt-6">
+            <h3 className="text-2xl font-semibold mb-4">Interview Questions</h3>
+            {questions.map((q, index) => (
+              <div key={index} className="mb-4">
+                <p className="text-gray-700 dark:text-gray-300 font-medium">
+                  {q}
+                </p>
+                <textarea
+                  className="w-full p-2 mt-2 border rounded dark:bg-gray-700 dark:text-white"
+                  value={answers[index] || ""}
+                  onChange={(e) => handleAnswerChange(index, e.target.value)}
+                />
+              </div>
+            ))}
+            <button
+              onClick={submitInterview}
+              className="mt-4 px-4 py-2 rounded bg-green-600 text-white font-semibold transition-all duration-300"
+            >
+              Submit Interview
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

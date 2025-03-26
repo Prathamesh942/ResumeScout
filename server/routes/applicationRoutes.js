@@ -12,6 +12,9 @@ const {
   verifyCandidate,
   verifyEmployer,
 } = require("../middleware/authMiddleware");
+const Groq = require("groq-sdk");
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const router = express.Router();
 
@@ -35,6 +38,13 @@ const upload = multer({
     cb(null, true);
   },
 });
+
+function extractQuestions(text) {
+  return text
+    .split("\n") // Split by new lines
+    .filter((line) => /^\d+\./.test(line)) // Keep only lines that start with a number
+    .map((line) => line.replace(/^\d+\.\s*/, "").trim()); // Remove the number and trim spaces
+}
 
 // Apply for a job (Candidate Only) with Resume Upload
 router.post(
@@ -93,6 +103,38 @@ router.post(
       // Check response from external server
       if (externalResponse.status !== 200) {
         return res.status(400).json({ message: "Failed to process resume" });
+      }
+
+      //questionarrie
+      try {
+        const resai = await groq.chat.completions.create({
+          model: "llama3-8b-8192",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an AI assistant that generates interview questions based on job descriptions and resumes.",
+            },
+            {
+              role: "user",
+              content: `Generate 5 one line answer technical interview questions for a backend developer. 
+              Job Description: ${jobDescription} 
+              Candidate's Resume: ${resumeText}RETURN ARRAY OF 5 QUESTIONS ONLY DO NOT RESPOND WITH ANYTHING ELSE BESIDES QUESTIONS`,
+            },
+          ],
+        });
+        const jsonString = resai.choices[0].message.content;
+        const questionnarieList = extractQuestions(jsonString);
+        return res.status(200).json({
+          message: "interview",
+          interview: questionnarieList,
+          resumeScore: externalResponse.data.similarityScore,
+        });
+      } catch (error) {
+        console.log(error);
+        res
+          .status(500)
+          .json({ message: "Error generating questionnarie", error });
       }
 
       // Save application
@@ -176,6 +218,74 @@ router.put(
       res.json({ message: "Application status updated", application });
     } catch (error) {
       res.status(500).json({ message: "Server error", error: error.message });
+    }
+  }
+);
+
+router.post(
+  "/:id/submitinterview",
+  verifyToken,
+  verifyCandidate,
+  async (req, res) => {
+    try {
+      const { questions, answers, resumeScore, jobId } = req.body;
+      console.log("Received Data:", req.body);
+
+      // Validate required fields
+      if (!questions || !answers || !resumeScore || !jobId) {
+        return res.status(400).json({ error: "Missing required fields." });
+      }
+
+      // AI Evaluation
+      const aiResponse = await groq.chat.completions.create({
+        model: "llama3-8b-8192",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an AI assistant that evaluates interview answers. Return a score between 0 and 1.",
+          },
+          {
+            role: "user",
+            content: `Evaluate the following answers for the given questions. Only return a single numerical score between 0 and 1.
+        
+        Questions: ${JSON.stringify(questions)}
+        Answers: ${JSON.stringify(answers)}
+        
+        Score:`,
+          },
+        ],
+      });
+
+      const aiScore = parseFloat(aiResponse.choices[0].message.content.trim());
+
+      // Ensure the AI returns a valid number
+      if (isNaN(aiScore) || aiScore < 0 || aiScore > 1) {
+        return res.status(500).json({ error: "Invalid AI response score." });
+      }
+
+      // Compute final score
+      const finalScore = resumeScore * 0.7 + aiScore * 0.3;
+      console.log("Final Score:", finalScore);
+
+      // Create Application Entry
+      const application = new Application({
+        job: jobId,
+        candidate: req.user.id,
+        status: "applied",
+        score: finalScore,
+      });
+
+      await application.save();
+
+      res.status(201).json({
+        message: "Application submitted successfully",
+        application,
+        aiScore,
+      });
+    } catch (error) {
+      console.error("Error submitting interview:", error);
+      res.status(500).json({ error: "Internal server error." });
     }
   }
 );
