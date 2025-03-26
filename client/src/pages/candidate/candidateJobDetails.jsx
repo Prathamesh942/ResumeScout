@@ -8,6 +8,7 @@ const CandidateJobDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [resume, setResume] = useState(null);
+  const [applied, setApplied] = useState(false);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -16,12 +17,52 @@ const CandidateJobDetails = () => {
           `http://localhost:5000/api/jobs/${id}`
         );
         setJob(data);
+        const token = localStorage.getItem("token");
+        console.log("Token:", token);
+
+        const res = await axios.get(
+          "http://localhost:5000/api/applications/my/applications",
+          { headers: { Authorization: `Bearer ${token}` } } // Fix: Headers should be the second argument
+        );
+
+        console.log("Applications Data:", res.data);
+        for (let app of res.data) {
+          console.log(app);
+          if (data._id == app?.job?._id) setApplied(true);
+        }
       } catch (err) {
         setError("Failed to fetch job details. Please try again.");
+        console.log(err.message);
       } finally {
         setLoading(false);
       }
     };
+    const fetchApplications = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        console.log("Token:", token);
+
+        const { data } = await axios.get(
+          "http://localhost:5000/api/applications/my/applications",
+          { headers: { Authorization: `Bearer ${token}` } } // Fix: Headers should be the second argument
+        );
+
+        console.log("Applications Data:", data);
+
+        // Loop through the applications if needed
+        for (const app of data) {
+          console.log(app, job);
+
+          // if (app.job._id == job.id) setApplied(true);
+        }
+      } catch (error) {
+        console.error(
+          "Error fetching applications:",
+          error.response?.data || error.message
+        );
+      }
+    };
+
     fetchJob();
   }, [id]);
 
@@ -92,13 +133,16 @@ const CandidateJobDetails = () => {
 
         <button
           onClick={applyForJob}
-          className="mt-4 px-4 py-2 rounded text-white font-semibold transition-all duration-300"
+          className={`mt-4 px-4 py-2 rounded text-white font-semibold transition-all duration-300 `}
           style={{
-            backgroundColor: "var(--color-primary)",
+            backgroundColor: `${
+              !applied ? "var(--color-primary)" : "bg-zinc-700"
+            }`,
             borderColor: "var(--color-primary)",
           }}
+          disabled={applied}
         >
-          Apply Now
+          {applied ? "Applied" : "Apply Now"}
         </button>
       </div>
     </div>

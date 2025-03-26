@@ -10,6 +10,7 @@ import EmployerJobs from "./pages/employer/EmployerJobs";
 import EmployerAddJob from "./pages/employer/EmployerAddJob";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
+import EmployerApplications from "./pages/employer/EmployerApplications";
 
 function App() {
   return (
@@ -50,6 +51,14 @@ function App() {
           element={
             <ProtectedRoute role="employer">
               <EmployerAddJob />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employer/jobs/:jobId"
+          element={
+            <ProtectedRoute role="employer">
+              <EmployerApplications />
             </ProtectedRoute>
           }
         />

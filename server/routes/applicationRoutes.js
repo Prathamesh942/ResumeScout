@@ -85,7 +85,7 @@ router.post(
       const jobDescription = job.description;
       // console.log(jobDescription, resumeText);
 
-      const externalResponse = await axios.post("http://127.0.0.1:5000/", {
+      const externalResponse = await axios.post("http://127.0.0.1:5001/", {
         jobDescription,
         resume: resumeText,
       });
@@ -128,7 +128,7 @@ router.get("/:jobId", verifyToken, verifyEmployer, async (req, res) => {
 
     const applications = await Application.find({ job: job._id }).populate(
       "candidate",
-      "name email resumeText"
+      "name email"
     );
     res.json(applications);
   } catch (error) {
